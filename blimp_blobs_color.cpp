@@ -78,7 +78,7 @@ CvPoint binarisation(IplImage* image, int *nbPixels) {
   // We release the memory of the mask
   cvReleaseImage(&mask);
   // We release the memory of the hsv image
-      cvReleaseImage(&hsv);
+  cvReleaseImage(&hsv);
 
   // If there is no pixel, we return a center outside the image, else we return the center of gravity
   if(*nbPixels > 0)
@@ -115,10 +115,8 @@ void addObjectToVideo(IplImage* image, CvPoint objectNextPos, int nbPixels) {
 
   // -1 = object isn't within the camera range
   } else {
-
     objectPos.x = -1;
     objectPos.y = -1;
-
   }
 
   // Draw an object (circle) centered on the calculated center of gravity
@@ -155,8 +153,7 @@ void getObjectColor(int event, int x, int y, int flags, void *param = NULL) {
     v = (int)pixel.val[2];
 
     // Release the memory of the hsv image
-        cvReleaseImage(&hsv);
-
+    cvReleaseImage(&hsv);
   }
 
 }
@@ -177,18 +174,18 @@ int main() {
 
   // Initialize the video Capture (200 => CV_CAP_V4L2)
 
- //capture = cvCreateCameraCapture(200);
+  //capture = cvCreateCameraCapture(200);
   capture = cvCreateCameraCapture(0);
 
   // Check if the capture is ok
-      if (!capture) {
+  if (!capture) {
     printf("Can't initialize the video capture.\n");
-          return -1;
+    return -1;
   }
 
   // Create the windows
-    cvNamedWindow("GeckoGeek Color Tracking", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("GeckoGeek Mask", CV_WINDOW_AUTOSIZE);
+  cvNamedWindow("GeckoGeek Color Tracking", CV_WINDOW_AUTOSIZE);
+  cvNamedWindow("GeckoGeek Mask", CV_WINDOW_AUTOSIZE);
   cvMoveWindow("GeckoGeek Color Tracking", 0, 100);
   cvMoveWindow("GeckoGeek Mask", 650, 100);
 
