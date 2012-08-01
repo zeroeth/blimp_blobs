@@ -20,9 +20,13 @@ void MatchingMethod( int, void* );
 /** @function main */
 int main( int argc, char** argv )
 {
+
+  VideoCapture cap(0); // open the default camera
+  if(!cap.isOpened())  // check if we succeeded
+      return -1;
+
   /// Load image and template
-  img = imread( argv[1], 1 );
-  templ = imread( argv[2], 1 );
+  templ = imread( argv[1], 1 );
 
   /// Create windows
   namedWindow( image_window, CV_WINDOW_AUTOSIZE );
@@ -30,11 +34,13 @@ int main( int argc, char** argv )
 
   /// Create Trackbar
   char* trackbar_label = "Method: \n 0: SQDIFF \n 1: SQDIFF NORMED \n 2: TM CCORR \n 3: TM CCORR NORMED \n 4: TM COEFF \n 5: TM COEFF NORMED";
-  createTrackbar( trackbar_label, image_window, &match_method, max_Trackbar, MatchingMethod );
+  //createTrackbar( trackbar_label, image_window, &match_method, max_Trackbar, MatchingMethod );
 
-  MatchingMethod( 0, 0 );
-
-  waitKey(0);
+  for(;;) {
+    cap >> img;
+    MatchingMethod( 0, 0 );
+    if(waitKey(1) >= 0) break;
+  }
   return 0;
 }
 
