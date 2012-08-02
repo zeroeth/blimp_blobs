@@ -2,7 +2,21 @@
 import cv
 global imghsv
 
+# purpose: using HSV thresholds, detects blue, yellow and purple objects in a video stream in three new windows
+# 	   1) a black/white stream showing objects matching threshold values (window "threshold")
+#	   2) a black/color stream tracking the locations of the objects in their respective colors (window "final")
+#	   3) a full-color stream showing the original video and the bounding boxes of detected objects (window "real")
+
+# things that would make this script more useful for future tests: 
+# 	   1) GUI HSV threshold and minimum pixel size sliders like Kevin has added to the Canny Edge Detection program
+#	   2) Limit the number of blue/yellow/purple objects that can be detected at one time to one
+
+# source from:
 # http://stackoverflow.com/questions/8152504/tracking-two-different-colors-using-opencv-2-3-and-python
+
+# definitely works with Mac OSX, Python 2.7, and OpenCV library
+
+# to modify color thresholds, change the cv.Scalar values in the InRange method in the gettresholdedimg function below
 
 def getthresholdedimg(im):
 
@@ -14,13 +28,13 @@ def getthresholdedimg(im):
 	# A little change here. Creates images for blue and yellow (or whatever color you like).
 	imgyellow=cv.CreateImage(cv.GetSize(im),8,1)
 	imgblue=cv.CreateImage(cv.GetSize(im),8,1)
-	imggreen=cv.CreateImage(cv.GetSize(im),8,1) # glen
+	imggreen=cv.CreateImage(cv.GetSize(im),8,1) # glen added this
 
 	imgthreshold=cv.CreateImage(cv.GetSize(im),8,1)
 
-	cv.InRangeS(imghsv,cv.Scalar(20,100,100),cv.Scalar(30,255,255),imgyellow)	# Select a range of yellow color
-	cv.InRangeS(imghsv,cv.Scalar(100,100,100),cv.Scalar(120,255,255),imgblue)	# Select a range of blue color #100 120
-	cv.InRangeS(imghsv,cv.Scalar(150,100,100),cv.Scalar(170,255,255),imggreen) #glen # Select a range of green color
+	cv.InRangeS(imghsv,cv.Scalar(20,100,100),cv.Scalar(30,255,255),imgyellow)	# Select a range of yellow color in HSV, where 20 is low H and 30 is high H
+	cv.InRangeS(imghsv,cv.Scalar(100,100,100),cv.Scalar(120,255,255),imgblue)	# Select a range of blue color 
+	cv.InRangeS(imghsv,cv.Scalar(150,100,100),cv.Scalar(170,255,255),imggreen) 	# glen added this; select a range of green color
 	cv.Add(imgthreshold,imgyellow,imgthreshold)
 	cv.Add(imgthreshold,imgblue,imgthreshold)
 	cv.Add(imgthreshold,imggreen,imgthreshold)
@@ -39,7 +53,7 @@ cv.NamedWindow("final",0)
 #	Create two lists to store co-ordinates of blobs
 blue=[]
 yellow=[]
-green=[] #glen
+purple=[] # glen added this
 
 while(1):
 	color_image = cv.QueryFrame(capture)
@@ -79,7 +93,7 @@ while(1):
 		elif (100<cv.Get2D(imghsv,centroidy,centroidx)[0]<120): # 100 120
 			blue.append((centroidx,centroidy))
 		elif (150<cv.Get2D(imghsv,centroidy,centroidx)[0]<170):
-			green.append((centroidx,centroidy))
+			purple.append((centroidx,centroidy))
 
 # 		Now drawing part. Exceptional handling is used to avoid IndexError.	After drawing is over, centroid from previous part is #		removed from list by pop. So in next frame,centroids in this frame become initial points of line to draw.		
 	try:
@@ -96,13 +110,13 @@ while(1):
 	except IndexError:
 		print "just wait for blue"	
 	
-#glen	
+# glen added this block
 	try:
-		cv.Circle(imdraw,green[1],5,(255,0,255))
-		cv.Line(imdraw,green[0],green[1],(255,0,255),3,8,0)
-		green.pop(0)			
+		cv.Circle(imdraw,purple[1],5,(255,0,255))
+		cv.Line(imdraw,purple[0],purple[1],(255,0,255),3,8,0)
+		purple.pop(0)			
 	except IndexError:
-		print "just wait for green"	
+		print "just wait for purple"	
 	
 	cv.Add(test,imdraw,test)
 
