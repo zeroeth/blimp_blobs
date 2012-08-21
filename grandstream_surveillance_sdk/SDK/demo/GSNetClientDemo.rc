@@ -1,0 +1,278 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// 中文(中华人民共和国) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+#ifdef _WIN32
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+#pragma code_page(936)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
+    "LANGUAGE 4, 2\r\n"
+    "#pragma code_page(936)\r\n"
+    "#include ""res\\GSNetClientDemo.rc2""  // 非 Microsoft Visual C++ 编辑的资源\r\n"
+    "#include ""afxres.rc""     // 标准组件\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\GSNetClientDemo.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 235, 55
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION " GSNetClientDemo"
+FONT 9, "宋体", 0, 0, 0x1
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,11,17,20,20
+    LTEXT           "GSNetClientDemo 1.0 ",IDC_STATIC,40,10,119,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2008",IDC_STATIC,40,25,119,8
+    DEFPUSHBUTTON   "确定",IDOK,178,7,50,16,WS_GROUP
+END
+
+IDD_GSNETCLIENTDEMO_DIALOG DIALOGEX 0, 0, 521, 424
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "GSNetClientDemo"
+FONT 9, "宋体", 0, 0, 0x1
+BEGIN
+    PUSHBUTTON      "OpenFile",IDC_BUTTON_OPEN_FILE,455,207,50,14
+    PUSHBUTTON      "CloseFile",IDC_BUTTON_CLOSE_FILE,455,224,50,14
+    CONTROL         "",IDC_STATIC_1,"Static",SS_BLACKFRAME,16,8,371,294
+    PUSHBUTTON      "StartRTSP",IDC_BUTTON_LIVE_RTSP,22,370,50,14
+    PUSHBUTTON      "StopRTSP",IDC_BUTTON_STOP_LIVE_RTSP,78,370,50,14
+    PUSHBUTTON      "StartRecord",IDC_BUTTON_START_RECORD,134,370,50,14
+    PUSHBUTTON      "StopRecord",IDC_BUTTON_STOP_RECORD,191,370,50,14
+    PUSHBUTTON      "Capture",IDC_BUTTON_CAPTURE,250,370,50,14
+    PUSHBUTTON      "FullScreen",IDC_BUTTON_FULL,305,370,50,14
+    PUSHBUTTON      "RefreshWnd",IDC_BUTTON_REFRESH_WND,22,394,50,14
+    PUSHBUTTON      "上",IDC_BUTTON_PTZ_UP,449,9,25,14
+    PUSHBUTTON      "左",IDC_BUTTON_PTZ_LEFT,422,23,25,14
+    PUSHBUTTON      "下",IDC_BUTTON_PTZ_DOWN,449,39,25,14
+    PUSHBUTTON      "右",IDC_BUTTON_PTZ_RIGHT,477,23,25,14
+    GROUPBOX        "",IDC_STATIC,16,359,417,54
+    GROUPBOX        "ptz",IDC_STATIC,409,2,96,79
+    CONTROL         "",IDC_STATIC_2,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,203,8,184,145
+    CONTROL         "",IDC_STATIC_3,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,16,157,184,145
+    CONTROL         "",IDC_STATIC_4,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,203,157,184,145
+    CONTROL         "",IDC_SPIN_BRIGHTNESS,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,494,110,11,14
+    EDITTEXT        IDC_EDIT_BRIGHTNESS,462,110,27,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Brightness",IDC_STATIC,416,112,41,8
+    GROUPBOX        "video parameter",IDC_STATIC,409,97,96,101
+    CONTROL         "",IDC_SPIN_Contrast,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,494,131,11,14
+    EDITTEXT        IDC_EDIT_Contrast,462,131,27,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Contrast",IDC_STATIC,416,133,41,8
+    CONTROL         "",IDC_SPIN_Saturation,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,494,153,11,14
+    EDITTEXT        IDC_EDIT_Saturation,462,153,27,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Saturation",IDC_STATIC,416,155,41,8
+    PUSHBUTTON      "Set",IDC_BUTTON_VP_SET,462,177,33,14
+    PUSHBUTTON      "Get",IDC_BUTTON_VP_GET,415,177,33,14
+    PUSHBUTTON      "&StartView",IDC_BUTTON_START_VIEW,78,394,50,14
+    PUSHBUTTON      "&StopView",IDC_BUTTON_STOP_VIEW,134,394,50,14
+    PUSHBUTTON      "AlarmRecord",IDC_BUTTON_ALARM_RECORD,191,394,50,14
+    PUSHBUTTON      "&Fast",IDC_BUTTON_FAST,455,293,50,14
+    PUSHBUTTON      "&Slow",IDC_BUTTON_SLOW,455,310,50,14
+    PUSHBUTTON      "&Normal",IDC_BUTTON_NORMAL,455,326,50,14
+    PUSHBUTTON      "Pause",IDC_BUTTON_PAUSE,455,240,50,14
+    PUSHBUTTON      "Step",IDC_BUTTON_STEP,455,275,50,14
+    LTEXT           "   ",IDC_STATIC_TOTAL_TIME,475,354,26,8
+    EDITTEXT        IDC_EDIT_SEEK,466,390,39,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Go",IDC_BUTTON_SEEK,466,403,39,14
+    LTEXT           " ",IDC_STATIC_CUR_TIME,475,372,26,8
+    LTEXT           "Total:",IDC_STATIC,444,354,28,8
+    LTEXT           "Cur:",IDC_STATIC,444,372,19,8
+    PUSHBUTTON      "Continue",IDC_BUTTON_CONTINUE,455,257,50,14
+    PUSHBUTTON      "StartTalk",IDC_BUTTON_START_TALK,250,394,50,14
+    PUSHBUTTON      "--",IDC_BUTTON_ZOOM_IN,432,62,19,14
+    PUSHBUTTON      "++",IDC_BUTTON_ZOOM_OUT,467,62,19,14
+    PUSHBUTTON      "OpenSound",IDC_BUTTON_SOUND,305,394,50,14
+END
+
+IDD_DIALOG_ADDRESS DIALOGEX 0, 0, 186, 114
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 9, "宋体", 400, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "ok",IDOK,33,88,50,14
+    PUSHBUTTON      "cancel",IDCANCEL,103,88,50,14
+    LTEXT           "host name:",IDC_STATIC,15,39,46,8
+    LTEXT           "channel:",IDC_STATIC,16,63,34,8
+    COMBOBOX        IDC_COMBO_CHANNEL,64,61,32,84,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_EDIT1,64,36,104,15,ES_AUTOHSCROLL
+    LTEXT           "protecol:",IDC_STATIC,15,15,35,8
+    COMBOBOX        IDC_COMBO_PROTOCOL,64,12,37,65,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_DIALOG_FULL_SCREEN DIALOGEX 0, 0, 186, 90
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080403a8"
+        BEGIN
+            VALUE "FileVersion", "1.0.0.1"
+            VALUE "InternalName", "GSNetClientDemo.exe"
+            VALUE "LegalCopyright", "保留所有权利。"
+            VALUE "OriginalFilename", "GSNetClientDemo.exe"
+            VALUE "ProductVersion", "1.0.0.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 936
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 228
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 48
+    END
+
+    IDD_GSNETCLIENTDEMO_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 514
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 417
+    END
+
+    IDD_DIALOG_ADDRESS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 102
+    END
+
+    IDD_DIALOG_FULL_SCREEN, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 83
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDS_ABOUTBOX            "关于 GSNetClientDemo(&A)..."
+END
+
+#endif    // 中文(中华人民共和国) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE 4, 2
+#pragma code_page(936)
+#include "res\GSNetClientDemo.rc2"  // 非 Microsoft Visual C++ 编辑的资源
+#include "afxres.rc"     // 标准组件
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
