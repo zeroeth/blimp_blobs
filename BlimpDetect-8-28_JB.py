@@ -7,6 +7,9 @@ import msvcrt
 import numpy as np
 from numpy import linalg as LA
 
+import socket
+import time
+
 global imghsv
 global x_3d, y_3d, z_3d
 
@@ -26,6 +29,22 @@ global x_3d, y_3d, z_3d
 
 # to modify color thresholds, change the cv.Scalar values in the InRange method in the gettresholdedimg function below
 
+def connect(ip,port):
+        #make a client socket
+        
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(1)
+        #keep trying to connect to the server until success
+        print("connecting to control server...")
+        connected = False
+        #while not connected:
+        try:
+                s.connect((ip, port))
+                connected = True
+        except Exception as err:
+                pass
+        #print("connected")
+        return s
 
 #The following function takes coordinates from the images and convertes them to 3D spatial positions
 #The calibration constants are in R1, T1, R2, and T2 for cameras 1 (west) and 2 (east)
@@ -160,6 +179,14 @@ cv.NamedWindow("east",cv.CV_WINDOW_AUTOSIZE)
 # blank lists to store coordinates of blue blob
 blue   = []
 
+#address of the control server
+ip = "md-red5.discovery.wisc.edu"
+port = 7779
+size = 1024
+
+#first get a connection to the server
+s = connect(ip,port)
+
 while(1):
         urllib.urlretrieve(url_west,fname_west)
         urllib.urlretrieve(url_east,fname_east)
@@ -181,6 +208,10 @@ while(1):
         contour = cv.FindContours(imgbluethresh, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
         # blank list into which points for bounding rectangles around blobs are appended
         points = []
+
+        centroidx = 0
+        centroidy = 0
+        
         while contour:
 
                 # Draw bounding rectangles
@@ -296,8 +327,20 @@ while(1):
 
         triang_3D(centx_west, centy_west, centx_east, centy_east)
 
-        print("x_3d: " + str(x_3d))
-        print("y_3d: " + str(y_3d))
-        print("z_3d: " + str(z_3d))
+        print("x_3d: " + str(x_3d[0]))
+        print("y_3d: " + str(y_3d[0]))
+        print("z_3d: " + str(z_3d[0]))
+
+        try:
+                #x,y,z = getPosition()
+                msg = "" + str(x_3d[0]) + "," + str(y_3d[0]) + "," + str(z_3d[0]) + "\n"
+                s.send(msg)
+                #time.sleep(1)
+        except Exception as err:
+                print("disconnected")
+                #we got disconnected somehow, reconnect
+                s = connect(ip,port)
+
+            
 
 ######################################################
