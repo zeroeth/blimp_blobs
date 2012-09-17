@@ -188,12 +188,15 @@ size = 1024
 s = connect(ip,port)
 
 while(1):
+        #capture images from cameras, store images to file
         urllib.urlretrieve(url_west,fname_west)
         urllib.urlretrieve(url_east,fname_east)
 
+        #open the images from file
         frame_west = cv.LoadImageM(fname_west,cv.CV_LOAD_IMAGE_COLOR);
         frame_east = cv.LoadImageM(fname_east,cv.CV_LOAD_IMAGE_COLOR);
 
+        #creates empty images of the same size
         imdraw_west = cv.CreateImage(cv.GetSize(frame_west), 8, 3)
         imdraw_east = cv.CreateImage(cv.GetSize(frame_east), 8, 3)
 
