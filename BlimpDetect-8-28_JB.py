@@ -3,7 +3,6 @@
 # import system modules
 import cv2.cv as cv
 import urllib
-import msvcrt
 import numpy as np
 from numpy import linalg as LA
 
@@ -46,6 +45,7 @@ def connect(ip,port):
         #print("connected")
         return s
 
+#---------------------------------------------------------
 #The following function takes coordinates from the images and convertes them to 3D spatial positions
 #The calibration constants are in R1, T1, R2, and T2 for cameras 1 (west) and 2 (east)
 #These constants are produced by matlab code that is available here:
@@ -125,7 +125,7 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         y_3d = y_coord
         z_3d = z_coord
 
-
+#---------------------------------------------------------
 def getthresholdedimg(im):
 
 	# this function take RGB image.Then convert it into HSV for easy colour detection 
@@ -152,32 +152,73 @@ def getthresholdedimg(im):
 	cv.Add(imgthreshold, imgblue,   imgthreshold)
 
 	return imgthreshold
+#---------------------------------------------------------
+#img is an image (passed in by reference I'm pretty sure)
+#sideName is for output printing purposes
+#this returns an x and y coordinate of the blimp (x = col, y = row)
+def procImg(img,sideName):
+
+        #creates empty images of the same size
+        imdraw = cv.CreateImage(cv.GetSize(img), 8, 3)
+
+        cv.SetZero(imdraw)
+        cv.Smooth(img, img, cv.CV_GAUSSIAN, 3, 0)
+        imgbluethresh = getthresholdedimg(img)
+        cv.Erode(imgbluethresh, imgbluethresh, None,  3)
+        cv.Dilate(imgbluethresh, imgbluethresh, None, 10)
+        img2 = cv.CloneImage(imgbluethresh)
+        storage = cv.CreateMemStorage(0)
+        contour = cv.FindContours(imgbluethresh, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
+
+        centroidx = 0
+        centroidy = 0
+        prevArea = 0
+        pt1 = (0, 0)
+        pt2 = (0, 0)
+
+        while contour:
+                #find the area of each collection of contiguous points (contour)
+                bound_rect = cv.BoundingRect(list(contour))
+                contour = contour.h_next()
+
+                #get the largest contour
+                area = bound_rect[2]*bound_rect[3];
+                if area > prevArea:
+                        pt1 = (bound_rect[0], bound_rect[1])
+                        pt2 = (bound_rect[0] + bound_rect[2], bound_rect[1] + bound_rect[3])                        
+
+        # Draw bounding rectangle
+        cv.Rectangle(img, pt1, pt2, cv.CV_RGB(255,0,0), 1)
+
+        # calculating centroid
+        centroidx = cv.Round((pt1[0]+pt2[0])/2)
+        centroidy = cv.Round((pt1[1]+pt2[1])/2)
+
+        if (centroidx == 0 or centroidy == 0):
+                print ("no blimp detected from " + sideName)
+        else:
+                print(sideName + " centroid x:" + str(centroidx))
+                print(sideName + " centroid y:" + str(centroidy))
+                
+        print("")
+
+        return (centroidx, centroidy)
 
 
+        
+#---------------------------------------------------------
 #!!Need to be on the local WID network to be able to grab images from the cameras
 #grab a frame from the east camera, store it to disk
-fname_east = 'C://Users//Jeremy//Documents//blimp//east.jpg'
+fname_east = './/east.jpg'
 url_east = 'http://10.129.20.11/snapshot/view0.jpg'
-urllib.urlretrieve(url_east,fname_east)
 
 #grab a frame from the west camera, store it to disk
-fname_west = 'C://Users//Jeremy//Documents//blimp//west.jpg'
+fname_west = './/west.jpg'
 url_west = 'http://10.129.20.12/snapshot/view0.jpg'
-urllib.urlretrieve(url_west,fname_west)
-
-frame_west = cv.LoadImageM(fname_west,cv.CV_LOAD_IMAGE_COLOR);
-frame_size = cv.GetSize(frame_west)
-
-# blank images to which images are added later
-test = cv.CreateImage(cv.GetSize(frame_west),8,3)
-img2 = cv.CreateImage(cv.GetSize(frame_west),8,3)
 
 # three windows that will open upon execution
 cv.NamedWindow("west",cv.CV_WINDOW_AUTOSIZE)
 cv.NamedWindow("east",cv.CV_WINDOW_AUTOSIZE)
-
-# blank lists to store coordinates of blue blob
-blue   = []
 
 #address of the control server
 ip = "md-red5.discovery.wisc.edu"
@@ -185,7 +226,8 @@ port = 7779
 size = 1024
 
 #first get a connection to the server
-s = connect(ip,port)
+#s = connect(ip,port)
+
 
 while(1):
         #capture images from cameras, store images to file
@@ -196,153 +238,40 @@ while(1):
         frame_west = cv.LoadImageM(fname_west,cv.CV_LOAD_IMAGE_COLOR);
         frame_east = cv.LoadImageM(fname_east,cv.CV_LOAD_IMAGE_COLOR);
 
-        #creates empty images of the same size
-        imdraw_west = cv.CreateImage(cv.GetSize(frame_west), 8, 3)
-        imdraw_east = cv.CreateImage(cv.GetSize(frame_east), 8, 3)
+        #find the blimp with one camera
+        centroids = procImg(frame_west,"west")  
+        centx_west = centroids[0]
+        centy_west = centroids[1]
 
-        #process west image
-        cv.SetZero(imdraw_west)
-        cv.Smooth(frame_west, frame_west, cv.CV_GAUSSIAN, 3, 0)
-        imgbluethresh = getthresholdedimg(frame_west)
-        cv.Erode(imgbluethresh, imgbluethresh, None,  3)
-        cv.Dilate(imgbluethresh, imgbluethresh, None, 10)
-        img2 = cv.CloneImage(imgbluethresh)
-        storage = cv.CreateMemStorage(0)
-        contour = cv.FindContours(imgbluethresh, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
-        # blank list into which points for bounding rectangles around blobs are appended
-        points = []
+        #find the blimp with one camera
+        centroids = procImg(frame_east,"east")        
+        centx_east = centroids[0]
+        centy_east = centroids[1]
 
-        centroidx = 0
-        centroidy = 0
-        
-        while contour:
-
-                # Draw bounding rectangles
-                bound_rect = cv.BoundingRect(list(contour))
-                contour = contour.h_next()
-                #print contour  # not sure why print contour
-
-                # for more details about cv.BoundingRect,see documentation
-                pt1 = (bound_rect[0], bound_rect[1])
-                pt2 = (bound_rect[0] + bound_rect[2], bound_rect[1] + bound_rect[3])
-                points.append(pt1)
-                points.append(pt2)
-                cv.Rectangle(frame_west, pt1, pt2, cv.CV_RGB(255,0,0), 1)
-
-                # calculating centroids
-                centroidx = cv.Round((pt1[0]+pt2[0])/2)
-                centroidy = cv.Round((pt1[1]+pt2[1])/2)
-
-                # identifying if blue blobs exist and adding centroids to corresponding lists.
-                # note that the lower and upper bounds correspond to the the lower and upper bounds
-                # in the getthresholdedimg(im): function earlier in the script.
-                # e.g., yellow has a lowerbound of 95 and upper bound of 115 in both sections of code
-                if (55 < cv.Get2D(imghsv,centroidy,centroidx)[0] < 155): 
-                        blue.append((centroidx,centroidy))
-
-        # draw colors in windows; exception handling is used to avoid IndexError.   
-        # after drawing is over, centroid from previous part is removed from list by pop. 
-        # so in next frame, centroids in this frame become initial points of line to draw   
-
-        # draw blue box around blue blimp blob
-        try:
-                cv.Circle(imdraw_west, blue[1], 5, (255,0,0))
-                cv.Line(imdraw_west, blue[0], blue[1], (255,0,0), 3, 8, 0) 
-                blue.pop(0)
-                print("west centroid x:" + str(centroidx))
-                print("west centroid y:" + str(centroidy))
-                print("")       
-        except IndexError:
-                print "no blimp detected"   
-
-
-        # adds 
-        cv.Add(test,imdraw_west,test)
-
-        centx_west = centroidx
-        centy_west = centroidy
-
-
-        #process east image
-        cv.SetZero(imdraw_east)
-        cv.Smooth(frame_east, frame_east, cv.CV_GAUSSIAN, 3, 0)
-        imgbluethresh = getthresholdedimg(frame_east)
-        cv.Erode(imgbluethresh, imgbluethresh, None,  3)
-        cv.Dilate(imgbluethresh, imgbluethresh, None, 10)
-        img2 = cv.CloneImage(imgbluethresh)
-        storage = cv.CreateMemStorage(0)
-        contour = cv.FindContours(imgbluethresh, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
-        # blank list into which points for bounding rectangles around blobs are appended
-        points = []
-        while contour:
-
-                # Draw bounding rectangles
-                bound_rect = cv.BoundingRect(list(contour))
-                contour = contour.h_next()
-                #print contour  # not sure why print contour
-
-                # for more details about cv.BoundingRect,see documentation
-                pt1 = (bound_rect[0], bound_rect[1])
-                pt2 = (bound_rect[0] + bound_rect[2], bound_rect[1] + bound_rect[3])
-                points.append(pt1)
-                points.append(pt2)
-                cv.Rectangle(frame_east, pt1, pt2, cv.CV_RGB(255,0,0), 1)
-
-                # calculating centroids
-                centroidx = cv.Round((pt1[0]+pt2[0])/2)
-                centroidy = cv.Round((pt1[1]+pt2[1])/2)
-
-                # identifying if blue blobs exist and adding centroids to corresponding lists.
-                # note that the lower and upper bounds correspond to the the lower and upper bounds
-                # in the getthresholdedimg(im): function earlier in the script.
-                # e.g., yellow has a lowerbound of 95 and upper bound of 115 in both sections of code
-                if (55 < cv.Get2D(imghsv,centroidy,centroidx)[0] < 155): 
-                        blue.append((centroidx,centroidy))
-
-        # draw colors in windows; exception handling is used to avoid IndexError.   
-        # after drawing is over, centroid from previous part is removed from list by pop. 
-        # so in next frame, centroids in this frame become initial points of line to draw   
-
-        # draw blue box around blue blimp blob
-        try:
-                cv.Circle(imdraw_east, blue[1], 5, (255,0,0))
-                cv.Line(imdraw_east, blue[0], blue[1], (255,0,0), 3, 8, 0) 
-                blue.pop(0)
-                print("east centroid x:" + str(centroidx))
-                print("east centroid y:" + str(centroidy))
-                print("")       
-        except IndexError:
-                print "no blimp detected"   
-
-
-        # adds 
-        cv.Add(test,imdraw_east,test)        
-
-        centx_east = centroidx
-        centy_east = centroidy
-
+        #display the images with the blimp outlined
         cv.ShowImage("west", frame_west)
         cv.WaitKey(100)
-
-
         cv.ShowImage("east", frame_east)
         cv.WaitKey(100)
 
+        #get the 3D location of the blimp
         triang_3D(centx_west, centy_west, centx_east, centy_east)
 
         print("x_3d: " + str(x_3d[0]))
         print("y_3d: " + str(y_3d[0]))
         print("z_3d: " + str(z_3d[0]))
+        print("-----------------------------------")
 
-        try:
-                #x,y,z = getPosition()
-                msg = "" + str(x_3d[0]) + "," + str(y_3d[0]) + "," + str(z_3d[0]) + "\n"
-                s.send(msg)
-                #time.sleep(1)
-        except Exception as err:
-                print("disconnected")
-                #we got disconnected somehow, reconnect
-                s = connect(ip,port)
+        #send the 3D location to the control server
+##        try:
+##                #x,y,z = getPosition()
+##                msg = "" + str(x_3d[0]) + "," + str(y_3d[0]) + "," + str(z_3d[0]) + "\n"
+##                s.send(msg)
+##                #time.sleep(1)
+##        except Exception as err:
+##                print("disconnected")
+##                #we got disconnected somehow, reconnect
+##                s = connect(ip,port)
 
             
 
