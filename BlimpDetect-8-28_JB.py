@@ -10,7 +10,6 @@ import socket
 import time
 
 global imghsv
-global x_3d, y_3d, z_3d
 
 # purpose: using HSV thresholds, detects blue, yellow and purple objects in a video stream in three new windows
 # 	   1) a black/white stream showing objects matching threshold values (window "threshold")
@@ -35,6 +34,7 @@ def connect(ip,port):
         s.settimeout(1)
         #keep trying to connect to the server until success
         print("connecting to control server...")
+        print("")
         connected = False
         #while not connected:
         try:
@@ -51,7 +51,7 @@ def connect(ip,port):
 #These constants are produced by matlab code that is available here:
 #http://www.vision.caltech.edu/bouguetj/calib_doc/
 def triang_3D(col_1, row_1, col_2, row_2) :
-        global x_3d, y_3d, z_3d
+        
         #R matrix for camera 1 (west side)
         R1 = np.array([[-74.2709, 637.41, -255.7461], [865.2027, 273.6518, -92.0415], [0.1602, 0.3172, -0.9347]])
         #T matrix for camera 1
@@ -121,9 +121,7 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         y_coord = y0+b*r[0]
         z_coord = z0+c*r[0]
 
-        x_3d = x_coord
-        y_3d = y_coord
-        z_3d = z_coord
+        return (x_coord[0], y_coord[0], z_coord[0])
 
 #---------------------------------------------------------
 def getthresholdedimg(im):
@@ -160,10 +158,12 @@ def procImg(img,sideName):
 
         #creates empty images of the same size
         imdraw = cv.CreateImage(cv.GetSize(img), 8, 3)
+        #put the smoothed image here
+        imgSmooth = cv.CreateImage(cv.GetSize(img), 8, 3)
 
         cv.SetZero(imdraw)
-        cv.Smooth(img, img, cv.CV_GAUSSIAN, 3, 0)
-        imgbluethresh = getthresholdedimg(img)
+        cv.Smooth(img, imgSmooth, cv.CV_GAUSSIAN, 3, 0) #Gaussian filter the image
+        imgbluethresh = getthresholdedimg(imgSmooth) #Get a color thresholed binary image
         cv.Erode(imgbluethresh, imgbluethresh, None,  3)
         cv.Dilate(imgbluethresh, imgbluethresh, None, 10)
         img2 = cv.CloneImage(imgbluethresh)
@@ -217,8 +217,8 @@ fname_west = './/west.jpg'
 url_west = 'http://10.129.20.12/snapshot/view0.jpg'
 
 # three windows that will open upon execution
-cv.NamedWindow("west",cv.CV_WINDOW_AUTOSIZE)
-cv.NamedWindow("east",cv.CV_WINDOW_AUTOSIZE)
+cv.NamedWindow("west",cv.CV_WINDOW_NORMAL)
+cv.NamedWindow("east",cv.CV_WINDOW_NORMAL)
 
 #address of the control server
 ip = "md-red5.discovery.wisc.edu"
@@ -226,7 +226,7 @@ port = 7779
 size = 1024
 
 #first get a connection to the server
-#s = connect(ip,port)
+s = connect(ip,port)
 
 
 while(1):
@@ -237,6 +237,9 @@ while(1):
         #open the images from file
         frame_west = cv.LoadImageM(fname_west,cv.CV_LOAD_IMAGE_COLOR);
         frame_east = cv.LoadImageM(fname_east,cv.CV_LOAD_IMAGE_COLOR);
+
+        #small_west 
+        #small_east = 
 
         #find the blimp with one camera
         centroids = procImg(frame_west,"west")  
@@ -255,23 +258,23 @@ while(1):
         cv.WaitKey(100)
 
         #get the 3D location of the blimp
-        triang_3D(centx_west, centy_west, centx_east, centy_east)
+        coord3D = triang_3D(centx_west, centy_west, centx_east, centy_east)
 
-        print("x_3d: " + str(x_3d[0]))
-        print("y_3d: " + str(y_3d[0]))
-        print("z_3d: " + str(z_3d[0]))
+        print("x_3d: " + str(coord3D[0]))
+        print("y_3d: " + str(coord3D[1]))
+        print("z_3d: " + str(coord3D[2]))
         print("-----------------------------------")
 
         #send the 3D location to the control server
-##        try:
-##                #x,y,z = getPosition()
-##                msg = "" + str(x_3d[0]) + "," + str(y_3d[0]) + "," + str(z_3d[0]) + "\n"
-##                s.send(msg)
-##                #time.sleep(1)
-##        except Exception as err:
-##                print("disconnected")
-##                #we got disconnected somehow, reconnect
-##                s = connect(ip,port)
+        try:
+                #x,y,z = getPosition()
+                msg = "" + str(coord3D[0]) + "," + str(coord3D[1]) + "," + str(coord3D[2]) + "\n"
+                s.send(msg)
+                #time.sleep(1)
+        except Exception as err:
+                print("disconnected")
+                #we got disconnected somehow, reconnect
+                s = connect(ip,port)
 
             
 
