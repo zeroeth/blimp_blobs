@@ -87,6 +87,8 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         x = M1[0]/M1[3]
         y = M1[1]/M1[3]
         z = M1[2]/M1[3]
+        v1L = np.array([x0, y0, z0])
+        v2L = np.array([x, y, z])
         a = x-x0
         b = y-y0
         c = z-z0
@@ -103,6 +105,8 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         x = M2[0]/M2[3]
         y = M2[1]/M2[3]
         z = M2[2]/M2[3]
+        v1R = np.array([x1, y1, z1])
+        v2R = np.array([x, y, z])
         d = x-x1
         e = y-y1
         f = z-z1
@@ -120,8 +124,26 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         x_coord = x0+a*r[0]
         y_coord = y0+b*r[0]
         z_coord = z0+c*r[0]
+        M = np.array([x_coord, y_coord, z_coord])
 
-        return (x_coord[0], y_coord[0], z_coord[0])
+        #compute distance to each ray from the estimated 3D location
+        v1L = v1L.transpose()
+        v2L = v2L.transpose()
+        v1R = v1R.transpose()
+        v2R = v2R.transpose()
+        
+        d1 = LA.norm(np.cross(np.subtract(v1L, v2L),np.subtract(M.transpose(),v2L)))/LA.norm(np.subtract(v1L,v2L))
+        d2 = LA.norm(np.cross(np.subtract(v1R, v2R),np.subtract(M.transpose(),v2R)))/LA.norm(np.subtract(v1R,v2R))
+        err1 = d1 + d2;
+
+        #project the estimated 3D position onto image, then find distance from original position
+        m1rn = np.dot(P1,np.vstack((M,[1])))
+        m2rn = np.dot(P2,np.vstack((M,[1])))
+        m1r = m1rn/m1rn[2]
+        m2r = m2rn/m2rn[2]
+        err2 = np.sqrt(np.sum(np.square(m1r[0:2]-m1[0:2]))) + np.sqrt(np.sum(np.square(m2r[0:2]-m2[0:2])))
+        
+        return (x_coord[0], y_coord[0], z_coord[0], err1, err2)
 
 #---------------------------------------------------------
 def getthresholdedimg(im):
@@ -188,7 +210,7 @@ def procImg(img,sideName):
                         pt2 = (bound_rect[0] + bound_rect[2], bound_rect[1] + bound_rect[3])                        
 
         # Draw bounding rectangle
-        cv.Rectangle(img, pt1, pt2, cv.CV_RGB(255,0,0), 1)
+        cv.Rectangle(img, pt1, pt2, cv.CV_RGB(255,0,0), 3)
 
         # calculating centroid
         centroidx = cv.Round((pt1[0]+pt2[0])/2)
@@ -217,8 +239,8 @@ fname_west = './/west.jpg'
 url_west = 'http://10.129.20.12/snapshot/view0.jpg'
 
 # three windows that will open upon execution
-cv.NamedWindow("west",cv.CV_WINDOW_NORMAL)
-cv.NamedWindow("east",cv.CV_WINDOW_NORMAL)
+cv.NamedWindow("west",cv.CV_WINDOW_AUTOSIZE)
+cv.NamedWindow("east",cv.CV_WINDOW_AUTOSIZE)
 
 #address of the control server
 ip = "md-red5.discovery.wisc.edu"
@@ -226,7 +248,7 @@ port = 7779
 size = 1024
 
 #first get a connection to the server
-s = connect(ip,port)
+#s = connect(ip,port)
 
 
 while(1):
@@ -251,10 +273,17 @@ while(1):
         centx_east = centroids[0]
         centy_east = centroids[1]
 
+        #decimate the resulting images
+        small_west = cv.CreateImage((int(0.5*cv.GetSize(frame_west)[0]), int(0.5*cv.GetSize(frame_west)[1])), 8, 3)
+        small_east = cv.CreateImage((int(0.5*cv.GetSize(frame_east)[0]), int(0.5*cv.GetSize(frame_east)[1])), 8, 3)
+        cv.Resize(frame_west, small_west)
+        cv.Resize(frame_east, small_east)
+
+
         #display the images with the blimp outlined
-        cv.ShowImage("west", frame_west)
+        cv.ShowImage("west", small_west)
         cv.WaitKey(100)
-        cv.ShowImage("east", frame_east)
+        cv.ShowImage("east", small_east)
         cv.WaitKey(100)
 
         #get the 3D location of the blimp
@@ -263,18 +292,20 @@ while(1):
         print("x_3d: " + str(coord3D[0]))
         print("y_3d: " + str(coord3D[1]))
         print("z_3d: " + str(coord3D[2]))
+        print("err1: " + str(coord3D[3]))
+        print("err2: " + str(coord3D[4]))
         print("-----------------------------------")
 
-        #send the 3D location to the control server
-        try:
-                #x,y,z = getPosition()
-                msg = "" + str(coord3D[0]) + "," + str(coord3D[1]) + "," + str(coord3D[2]) + "\n"
-                s.send(msg)
-                #time.sleep(1)
-        except Exception as err:
-                print("disconnected")
-                #we got disconnected somehow, reconnect
-                s = connect(ip,port)
+##        #send the 3D location to the control server
+##        try:
+##                #x,y,z = getPosition()
+##                msg = "" + str(coord3D[0]) + "," + str(coord3D[1]) + "," + str(coord3D[2]) + "\n"
+##                s.send(msg)
+##                #time.sleep(1)
+##        except Exception as err:
+##                print("disconnected")
+##                #we got disconnected somehow, reconnect
+##                s = connect(ip,port)
 
             
 
