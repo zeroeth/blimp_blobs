@@ -173,10 +173,10 @@ def getthresholdedimg(im):
 
 	return imgthreshold
 #---------------------------------------------------------
-#img is an image (passed in by reference I'm pretty sure)
+#img is an image (passed in by reference)
 #sideName is for output printing purposes
 #this returns an x and y coordinate of the blimp (x = col, y = row)
-def procImg(img,sideName):
+def procImg(img,sideName,dispFlag):
 
         #creates empty images of the same size
         imdraw = cv.CreateImage(cv.GetSize(img), 8, 3)
@@ -188,7 +188,7 @@ def procImg(img,sideName):
         imgbluethresh = getthresholdedimg(imgSmooth) #Get a color thresholed binary image
         cv.Erode(imgbluethresh, imgbluethresh, None,  3)
         cv.Dilate(imgbluethresh, imgbluethresh, None, 10)
-        img2 = cv.CloneImage(imgbluethresh)
+        #img2 = cv.CloneImage(imgbluethresh)
         storage = cv.CreateMemStorage(0)
         contour = cv.FindContours(imgbluethresh, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
 
@@ -205,7 +205,11 @@ def procImg(img,sideName):
 
                 #get the largest contour
                 area = bound_rect[2]*bound_rect[3];
-                if area > prevArea:
+
+                if dispFlag:
+                        print("Area= " + str(area))
+                        
+                if (area > prevArea and area > 2000):
                         pt1 = (bound_rect[0], bound_rect[1])
                         pt2 = (bound_rect[0] + bound_rect[2], bound_rect[1] + bound_rect[3])                        
 
@@ -223,6 +227,17 @@ def procImg(img,sideName):
                 print(sideName + " centroid y:" + str(centroidy))
                 
         print("")
+
+        if dispFlag:
+                small_thresh = cv.CreateImage((int(0.25*cv.GetSize(imgbluethresh)[0]), int(0.25*cv.GetSize(imgbluethresh)[1])), 8, 1)
+                cv.Resize(imgbluethresh, small_thresh)
+                cv.ShowImage(sideName + "_threshold", small_thresh)
+                cv.WaitKey(100)
+
+                small_hsv = cv.CreateImage((int(0.25*cv.GetSize(imghsv)[0]), int(0.25*cv.GetSize(imghsv)[1])), 8, 3)
+                cv.Resize(imghsv, small_hsv)
+                cv.ShowImage(sideName + "_hsv", small_hsv)
+                cv.WaitKey(100)
 
         return (centroidx, centroidy)
 
@@ -242,6 +257,15 @@ url_west = 'http://10.129.20.12/snapshot/view0.jpg'
 cv.NamedWindow("west",cv.CV_WINDOW_AUTOSIZE)
 cv.NamedWindow("east",cv.CV_WINDOW_AUTOSIZE)
 
+# extra images to show intermediate tracking results
+dispMore = 0
+if dispMore:
+        cv.NamedWindow("west_threshold",cv.CV_WINDOW_AUTOSIZE)
+        cv.NamedWindow("east_threshold",cv.CV_WINDOW_AUTOSIZE)
+        cv.NamedWindow("west_hsv",cv.CV_WINDOW_AUTOSIZE)
+        cv.NamedWindow("east_hsv",cv.CV_WINDOW_AUTOSIZE)        
+        
+
 #address of the control server
 ip = "md-red5.discovery.wisc.edu"
 port = 7779
@@ -260,22 +284,19 @@ while(1):
         frame_west = cv.LoadImageM(fname_west,cv.CV_LOAD_IMAGE_COLOR);
         frame_east = cv.LoadImageM(fname_east,cv.CV_LOAD_IMAGE_COLOR);
 
-        #small_west 
-        #small_east = 
-
-        #find the blimp with one camera
-        centroids = procImg(frame_west,"west")  
+        #find the blimp with one camera, frame is passed in by reference
+        centroids = procImg(frame_west,"west",dispMore)  
         centx_west = centroids[0]
         centy_west = centroids[1]
 
-        #find the blimp with one camera
-        centroids = procImg(frame_east,"east")        
+        #find the blimp with one camera, frame is passed in by reference
+        centroids = procImg(frame_east,"east",dispMore)        
         centx_east = centroids[0]
         centy_east = centroids[1]
 
         #decimate the resulting images
-        small_west = cv.CreateImage((int(0.5*cv.GetSize(frame_west)[0]), int(0.5*cv.GetSize(frame_west)[1])), 8, 3)
-        small_east = cv.CreateImage((int(0.5*cv.GetSize(frame_east)[0]), int(0.5*cv.GetSize(frame_east)[1])), 8, 3)
+        small_west = cv.CreateImage((int(0.25*cv.GetSize(frame_west)[0]), int(0.25*cv.GetSize(frame_west)[1])), 8, 3)
+        small_east = cv.CreateImage((int(0.25*cv.GetSize(frame_east)[0]), int(0.25*cv.GetSize(frame_east)[1])), 8, 3)
         cv.Resize(frame_west, small_west)
         cv.Resize(frame_east, small_east)
 
