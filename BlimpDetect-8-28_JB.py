@@ -8,6 +8,7 @@ from numpy import linalg as LA
 
 import socket
 import time
+import os
 
 global imghsv
 
@@ -52,32 +53,26 @@ def connect(ip,port):
 #http://www.vision.caltech.edu/bouguetj/calib_doc/
 def triang_3D(col_1, row_1, col_2, row_2) :
         
-        #R matrix for camera 1 (west side)
-        R1 = np.array([[-74.2709, 637.41, -255.7461], [865.2027, 273.6518, -92.0415], [0.1602, 0.3172, -0.9347]])
-        #T matrix for camera 1
-        T1 = np.array([[1.3248e5], [4.1268e4], [505.0954]])
-        P1 = np.hstack((R1, T1))
+        #Corrected camera matrix for west side
+        P1 = np.array([[408.4918, -1607.7562, 3814.1879, 490234.8756], [-1793.2995, -707.4668, -45.8775, 646489.5760], [0.1810, -0.9505, -0.2524, 1285.5524]])
 
-        #R matrix for camera 2 (east side)
-        R2 = np.array([[-20.0487, 179.5963, -666.7510], [751.5431, -397.57, -330.23], [-0.2329, -0.5675, -0.7898]])
-        #T matrix for camera 2
-        T2 = np.array([[3.7547e5], [3.3423e5], [907.6034]])
-        P2 = np.hstack((R2, T2))
+        #Corrected camera matrix for east side
+        P2 = np.array([[-49.3179, -518.1547, -4126.6037, 847220.0489], [-1776.8193, 738.4249, -127.1965, 963513.3797], [0.2075, 0.9387, -0.2753, 1589.9759]])
 
         #blimp position from camera 1
-        #col_1 = 411
-        #row_1 = 382
+        #col_1 = 396
+        #row_1 = 424
         #m1 = np.array([
         #blimp position from camera 2
-        #col_2 = 531
-        #row_2 = 178
+        #col_2 = 518
+        #row_2 = 538
 
 
         #translated from matlab:
 
         #Camera 1
-        invR1 = LA.inv(R1)
-        m1T1 = -1*T1
+        invR1 = LA.inv(P1[0:3,0:3])
+        m1T1 = -1*P1[:,3]
         C1 = np.dot(invR1, m1T1)
         x0 = C1[0]
         y0 = C1[1]
@@ -94,8 +89,8 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         c = z-z0
 
         #Camera 2
-        invR2 = LA.inv(R2)
-        m1T2 = -1*T2
+        invR2 = LA.inv(P2[0:3,0:3])
+        m1T2 = -1*P2[:,3]
         C2 = np.dot(invR2, m1T2)
         x1 = C2[0]
         y1 = C2[1]
@@ -131,7 +126,7 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         v2L = v2L.transpose()
         v1R = v1R.transpose()
         v2R = v2R.transpose()
-        
+
         d1 = LA.norm(np.cross(np.subtract(v1L, v2L),np.subtract(M.transpose(),v2L)))/LA.norm(np.subtract(v1L,v2L))
         d2 = LA.norm(np.cross(np.subtract(v1R, v2R),np.subtract(M.transpose(),v2R)))/LA.norm(np.subtract(v1R,v2R))
         err1 = d1 + d2;
@@ -142,6 +137,7 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         m1r = m1rn/m1rn[2]
         m2r = m2rn/m2rn[2]
         err2 = np.sqrt(np.sum(np.square(m1r[0:2]-m1[0:2]))) + np.sqrt(np.sum(np.square(m2r[0:2]-m2[0:2])))
+
         
         return (x_coord[0], y_coord[0], z_coord[0], err1, err2)
 
@@ -166,7 +162,7 @@ def getthresholdedimg(im):
 	# determine HSV color thresholds for yellow, blue, and green
 	# cv.InRange(src, lowerbound, upperbound, dst)
 	# for imgblue, lowerbound is 95, and upperbound is 115
-	cv.InRangeS(imghsv, cv.Scalar(55,100,100), cv.Scalar(155,255,255), imgblue  )
+	cv.InRangeS(imghsv, cv.Scalar(70,100,100), cv.Scalar(155,255,255), imgblue  )
 	
 	# add color thresholds to blank 'threshold' image
 	cv.Add(imgthreshold, imgblue,   imgthreshold)
@@ -209,7 +205,7 @@ def procImg(img,sideName,dispFlag):
                 if dispFlag:
                         print("Area= " + str(area))
                         
-                if (area > prevArea and area > 2000):
+                if (area > prevArea and area > 3000):
                         pt1 = (bound_rect[0], bound_rect[1])
                         pt2 = (bound_rect[0] + bound_rect[2], bound_rect[1] + bound_rect[3])                        
 
@@ -263,7 +259,18 @@ if dispMore:
         cv.NamedWindow("west_threshold",cv.CV_WINDOW_AUTOSIZE)
         cv.NamedWindow("east_threshold",cv.CV_WINDOW_AUTOSIZE)
         cv.NamedWindow("west_hsv",cv.CV_WINDOW_AUTOSIZE)
-        cv.NamedWindow("east_hsv",cv.CV_WINDOW_AUTOSIZE)        
+        cv.NamedWindow("east_hsv",cv.CV_WINDOW_AUTOSIZE)
+
+#Live images from the IP cameras
+#(if not live, then this file needs to be in folder with a bunch of images)
+#(if live, then need to be local at WID)
+liveIP = 1
+if liveIP == 0:
+        #need to be in directory with a bunch of images
+        dirList = os.listdir(os.getcwd())
+        num_base = 0
+        east_offset = 0
+        west_offset = 147
         
 
 #address of the control server
@@ -276,9 +283,17 @@ size = 1024
 
 
 while(1):
-        #capture images from cameras, store images to file
-        urllib.urlretrieve(url_west,fname_west)
-        urllib.urlretrieve(url_east,fname_east)
+        if liveIP:
+                #capture images from cameras, store images to file
+                urllib.urlretrieve(url_west,fname_west)
+                urllib.urlretrieve(url_east,fname_east)
+        else:
+                num_base = (num_base + 1)%145
+                west_num = west_offset + num_base
+                east_num = east_offset + num_base
+                fname_west = dirList[west_num]
+                fname_east = dirList[east_num]
+                cv.WaitKey(2000) #wait for 2 seconds so I can see the output
 
         #open the images from file
         frame_west = cv.LoadImageM(fname_west,cv.CV_LOAD_IMAGE_COLOR);
