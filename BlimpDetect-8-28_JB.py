@@ -162,12 +162,13 @@ def getthresholdedimg(im):
 	# determine HSV color thresholds for yellow, blue, and green
 	# cv.InRange(src, lowerbound, upperbound, dst)
 	# for imgblue, lowerbound is 95, and upperbound is 115
-	cv.InRangeS(imghsv, cv.Scalar(70,100,100), cv.Scalar(155,255,255), imgblue  )
+	cv.InRangeS(imghsv, cv.Scalar(55,110,110), cv.Scalar(155,255,255), imgblue  )
 	
 	# add color thresholds to blank 'threshold' image
 	cv.Add(imgthreshold, imgblue,   imgthreshold)
 
-	return imgthreshold
+	#return imgthreshold
+	return imgblue
 #---------------------------------------------------------
 #img is an image (passed in by reference)
 #sideName is for output printing purposes
@@ -178,10 +179,13 @@ def procImg(img,sideName,dispFlag):
         imdraw = cv.CreateImage(cv.GetSize(img), 8, 3)
         #put the smoothed image here
         imgSmooth = cv.CreateImage(cv.GetSize(img), 8, 3)
+        #put thresholded image here
+        imgMask = cv.CreateImage(cv.GetSize(img), 8, 1)
 
         cv.SetZero(imdraw)
         cv.Smooth(img, imgSmooth, cv.CV_GAUSSIAN, 3, 0) #Gaussian filter the image
-        imgbluethresh = getthresholdedimg(imgSmooth) #Get a color thresholed binary image
+        imgbluethresh = getthresholdedimg(img) #Get a color thresholed binary image
+        imgMask = imgbluethresh
         cv.Erode(imgbluethresh, imgbluethresh, None,  3)
         cv.Dilate(imgbluethresh, imgbluethresh, None, 10)
         #img2 = cv.CloneImage(imgbluethresh)
@@ -202,8 +206,8 @@ def procImg(img,sideName,dispFlag):
                 #get the largest contour
                 area = bound_rect[2]*bound_rect[3];
 
-                if dispFlag:
-                        print("Area= " + str(area))
+                #if dispFlag:
+                #        print("Area= " + str(area))
                         
                 if (area > prevArea and area > 3000):
                         pt1 = (bound_rect[0], bound_rect[1])
@@ -225,13 +229,21 @@ def procImg(img,sideName,dispFlag):
         print("")
 
         if dispFlag:
-                small_thresh = cv.CreateImage((int(0.25*cv.GetSize(imgbluethresh)[0]), int(0.25*cv.GetSize(imgbluethresh)[1])), 8, 1)
-                cv.Resize(imgbluethresh, small_thresh)
+                small_thresh = cv.CreateImage((int(dispScale1*cv.GetSize(imgbluethresh)[0]), int(dispScale1*cv.GetSize(imgbluethresh)[1])), 8, 1)
+                cv.Resize(imgMask, small_thresh)
+                cv.Threshold(small_thresh, small_thresh, 0, 255, cv.CV_THRESH_BINARY)
                 cv.ShowImage(sideName + "_threshold", small_thresh)
                 cv.WaitKey(100)
 
                 small_hsv = cv.CreateImage((int(0.25*cv.GetSize(imghsv)[0]), int(0.25*cv.GetSize(imghsv)[1])), 8, 3)
                 cv.Resize(imghsv, small_hsv)
+
+                small_hsv_h = cv.CreateImage((int(0.25*cv.GetSize(imghsv)[0]), int(0.25*cv.GetSize(imghsv)[1])), 8, 1)
+                small_hsv_s = cv.CreateImage((int(0.25*cv.GetSize(imghsv)[0]), int(0.25*cv.GetSize(imghsv)[1])), 8, 1)
+                small_hsv_v = cv.CreateImage((int(0.25*cv.GetSize(imghsv)[0]), int(0.25*cv.GetSize(imghsv)[1])), 8, 1)
+                small_hsv_x = cv.CreateImage((int(0.25*cv.GetSize(imghsv)[0]), int(0.25*cv.GetSize(imghsv)[1])), 8, 1)
+                
+                cv.Split(small_hsv, small_hsv_h, small_hsv_s, small_hsv_v, None)
                 cv.ShowImage(sideName + "_hsv", small_hsv)
                 cv.WaitKey(100)
 
@@ -254,7 +266,7 @@ cv.NamedWindow("west",cv.CV_WINDOW_AUTOSIZE)
 cv.NamedWindow("east",cv.CV_WINDOW_AUTOSIZE)
 
 # extra images to show intermediate tracking results
-dispMore = 0
+dispMore = 1
 if dispMore:
         cv.NamedWindow("west_threshold",cv.CV_WINDOW_AUTOSIZE)
         cv.NamedWindow("east_threshold",cv.CV_WINDOW_AUTOSIZE)
@@ -269,8 +281,10 @@ if liveIP == 0:
         #need to be in directory with a bunch of images
         dirList = os.listdir(os.getcwd())
         num_base = 0
-        east_offset = 0
-        west_offset = 147
+        both_offset = 10
+        num_imgs = 145 - both_offset
+        east_offset = 0 + both_offset
+        west_offset = 147 + both_offset
         
 
 #address of the control server
@@ -281,6 +295,9 @@ size = 1024
 #first get a connection to the server
 #s = connect(ip,port)
 
+dispScale1 = 0.35
+dispScale2 = 0.25
+
 
 while(1):
         if liveIP:
@@ -288,7 +305,7 @@ while(1):
                 urllib.urlretrieve(url_west,fname_west)
                 urllib.urlretrieve(url_east,fname_east)
         else:
-                num_base = (num_base + 1)%145
+                num_base = (num_base + 1)%(num_imgs)
                 west_num = west_offset + num_base
                 east_num = east_offset + num_base
                 fname_west = dirList[west_num]
@@ -296,8 +313,8 @@ while(1):
                 cv.WaitKey(2000) #wait for 2 seconds so I can see the output
 
         #open the images from file
-        frame_west = cv.LoadImageM(fname_west,cv.CV_LOAD_IMAGE_COLOR);
-        frame_east = cv.LoadImageM(fname_east,cv.CV_LOAD_IMAGE_COLOR);
+        frame_west = cv.LoadImage(fname_west,cv.CV_LOAD_IMAGE_COLOR);
+        frame_east = cv.LoadImage(fname_east,cv.CV_LOAD_IMAGE_COLOR);
 
         #find the blimp with one camera, frame is passed in by reference
         centroids = procImg(frame_west,"west",dispMore)  
@@ -310,8 +327,8 @@ while(1):
         centy_east = centroids[1]
 
         #decimate the resulting images
-        small_west = cv.CreateImage((int(0.25*cv.GetSize(frame_west)[0]), int(0.25*cv.GetSize(frame_west)[1])), 8, 3)
-        small_east = cv.CreateImage((int(0.25*cv.GetSize(frame_east)[0]), int(0.25*cv.GetSize(frame_east)[1])), 8, 3)
+        small_west = cv.CreateImage((int(dispScale1*cv.GetSize(frame_west)[0]), int(dispScale1*cv.GetSize(frame_west)[1])), 8, 3)
+        small_east = cv.CreateImage((int(dispScale1*cv.GetSize(frame_east)[0]), int(dispScale1*cv.GetSize(frame_east)[1])), 8, 3)
         cv.Resize(frame_west, small_west)
         cv.Resize(frame_east, small_east)
 
@@ -322,27 +339,28 @@ while(1):
         cv.ShowImage("east", small_east)
         cv.WaitKey(100)
 
-        #get the 3D location of the blimp
-        coord3D = triang_3D(centx_west, centy_west, centx_east, centy_east)
+        if (centx_west != 0 and centy_west != 0 and centx_east != 0 and centy_east != 0):
+                #get the 3D location of the blimp
+                coord3D = triang_3D(centx_west, centy_west, centx_east, centy_east)
 
-        print("x_3d: " + str(coord3D[0]))
-        print("y_3d: " + str(coord3D[1]))
-        print("z_3d: " + str(coord3D[2]))
-        print("err1: " + str(coord3D[3]))
-        print("err2: " + str(coord3D[4]))
+                print("x_3d: " + str(coord3D[0]))
+                print("y_3d: " + str(coord3D[1]))
+                print("z_3d: " + str(coord3D[2]))
+                print("err1: " + str(coord3D[3]))
+                print("err2: " + str(coord3D[4]))
+        
+
+##                #send the 3D location to the control server
+##                try:
+##                        #x,y,z = getPosition()
+##                        msg = "" + str(coord3D[0]) + "," + str(coord3D[1]) + "," + str(coord3D[2]) + "\n"
+##                        s.send(msg)
+##                        #time.sleep(1)
+##                except Exception as err:
+##                        print("disconnected")
+##                        #we got disconnected somehow, reconnect
+##                        s = connect(ip,port)
         print("-----------------------------------")
-
-##        #send the 3D location to the control server
-##        try:
-##                #x,y,z = getPosition()
-##                msg = "" + str(coord3D[0]) + "," + str(coord3D[1]) + "," + str(coord3D[2]) + "\n"
-##                s.send(msg)
-##                #time.sleep(1)
-##        except Exception as err:
-##                print("disconnected")
-##                #we got disconnected somehow, reconnect
-##                s = connect(ip,port)
-
             
 
 ######################################################
