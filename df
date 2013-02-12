@@ -1,0 +1,83 @@
+[33mcommit 1d3b9496b14691b66bf39cd40da4e1ce459e3cf8[m
+Author: Jeremy Bredfeldt <jeremybredfeldt@gmail.com>
+Date:   Tue Dec 4 14:15:55 2012 -0600
+
+    Latest version
+    
+    Just some output changes and a few other minor changes made a long time
+    ago.
+
+[33mcommit 31293d5ace2a8c477d8c554ed6fe2ec76e474c95[m
+Author: Jeremy Bredfeldt <jeremybredfeldt@gmail.com>
+Date:   Wed Sep 26 13:56:53 2012 -0500
+
+    Corrected camera matrices, added looping offline
+
+[33mcommit 5fe6e89c191e1aa453d082893f8b29896385dafe[m
+Author: Jeremy Bredfeldt <jeremybredfeldt@gmail.com>
+Date:   Tue Sep 25 16:53:16 2012 -0500
+
+    Added blimp size threshold and some fancy display options
+
+[33mcommit 3438fa544d01a30a1046735cb652a751ff520c80[m
+Author: Jeremy Bredfeldt <jeremybredfeldt@gmail.com>
+Date:   Tue Sep 25 16:03:41 2012 -0500
+
+    Added error calculations
+    
+    Estimates how far apart the two rays are from eachother. Helps to give a
+    confidence in the estimated position. If the error is too large, then
+    the object is not likely to be the blimp.
+
+[33mcommit 93093c25e26065274c9bd54b9be40467c670b93e[m
+Author: Jeremy Bredfeldt <jeremybredfeldt@gmail.com>
+Date:   Tue Sep 18 14:26:51 2012 -0500
+
+    Display non-smoothed image
+
+[33mcommit 23e3e3f75251b56241c944baa7bd477488e4fb91[m
+Author: Jeremy Bredfeldt <jeremybredfeldt@gmail.com>
+Date:   Tue Sep 18 13:36:04 2012 -0500
+
+    Cleaned up code, added largest area test
+
+[33mcommit 1e7e7565c0dc5e544eded2a9e498666321e9e503[m
+Author: Jeremy Bredfeldt <jeremybredfeldt@gmail.com>
+Date:   Mon Sep 17 12:01:38 2012 -0500
+
+    Added comments
+
+[33mcommit 725d4ad8e6af61b16ec7ee61e49bc2de941afa41[m
+Author: Jeremy Bredfeldt <jeremybredfeldt@gmail.com>
+Date:   Thu Sep 13 15:18:39 2012 -0500
+
+    Send position to server
+    
+    Now this sends the position info to the server.
+
+[33mcommit e0befe38e9be45bd2ca8077a771ce7febe80b530[m
+Author: Jeremy Bredfeldt <jeremybredfeldt@gmail.com>
+Date:   Wed Sep 12 08:06:43 2012 -0500
+
+    Now can live capture and create 3D locations
+    
+    To do: clean up code, put repeated code into functions, put the raw
+    images on the display rather than the blurred images, figure out a way
+    to stream the images faster from the cameras (eliminate hard drive write
+    and read if possible), add functionality to get 3D locations to the
+    control server
+
+[33mcommit 2e7c76d571b4bb38cde1ed9ca0e561a32d742554[m
+Author: Jeremy Bredfeldt <jeremybredfeldt@gmail.com>
+Date:   Thu Sep 6 21:43:28 2012 -0500
+
+    Added some attempts at capturing the IP cam stream, no luck
+
+[33mcommit 06f811b1f0f09191e2f1630d95d6ae2096fae864[m
+Author: Glen Aronson <glen.aronson@gmail.com>
+Date:   Tue Sep 4 08:03:45 2012 -0500
+
+    Latest Python blimp detection script
+    
+    Tested with blimp movie, outputs blip centroids in command line. Color
+    tracking needs to be improved in different lighting conditions.
