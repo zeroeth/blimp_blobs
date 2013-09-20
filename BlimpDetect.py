@@ -54,11 +54,11 @@ def connect(ip,port):
 def triang_3D(col_1, row_1, col_2, row_2) :
         
         #Corrected camera matrix for west side
-        P1 = np.array([[408.4918, -1607.7562, 3814.1879, 490234.8756], [-1793.2995, -707.4668, -45.8775, 646489.5760], [0.1810, -0.9505, -0.2524, 1285.5524]])
-
+        #P1 = np.array([[408.4918, -1607.7562, 3814.1879, 490234.8756], [-1793.2995, -707.4668, -45.8775, 646489.5760], [0.1810, -0.9505, -0.2524, 1285.5524]])
+        P1 = np.array([[-2.1, 0.0, -3.64, 55432.5], [0.0, 4.2, 0.0, -18186.0], [0.866, 0.0, -0.5, 7620.0]])
         #Corrected camera matrix for east side
-        P2 = np.array([[-49.3179, -518.1547, -4126.6037, 847220.0489], [-1776.8193, 738.4249, -127.1965, 963513.3797], [0.2075, 0.9387, -0.2753, 1589.9759]])
-
+        #P2 = np.array([[-49.3179, -518.1547, -4126.6037, 847220.0489], [-1776.8193, 738.4249, -127.1965, 963513.3797], [0.2075, 0.9387, -0.2753, 1589.9759]])
+        P2 = np.array([[2.1, 0.0, -3.64, -34048.4],[0.0, -4.2, 0.0, 18186.0],[-0.866, 0.0, -0.5, 44521.3]])
         #blimp position from camera 1
         #col_1 = 396
         #row_1 = 424
@@ -66,6 +66,12 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         #blimp position from camera 2
         #col_2 = 518
         #row_2 = 538
+
+        #Convert pixel numbers to mm, 0, 0 is the center of the image, 
+        col_1 = (col_1-640)*0.0035
+        col_2 = (col_2-640)*0.0035
+        row_1 = (row_1-360)*0.00475
+        row_2 = (row_2-360)*0.00475
 
 
         #translated from matlab:
@@ -276,7 +282,7 @@ if dispMore:
 #Live images from the IP cameras
 #(if not live, then this file needs to be in folder with a bunch of images)
 #(if live, then need to be local at WID)
-liveIP = 0
+liveIP = 1
 if liveIP == 0:
         #need to be in directory with a bunch of images
         dirList = os.listdir(os.getcwd())

@@ -18,9 +18,9 @@
 
 %Atrium dimensions
 %39624 mm in x direction
-ax = 39624;
+ax = 42610;
 %10947 mm in y direction
-ay = 10947;
+ay = 8660;
 %15240 mm in z direction
 az = 15240;
 
@@ -90,7 +90,7 @@ P2 = K*E2;
 %--Tests--
 
 %3D point, middle of the atrium floor:
-x1 = [ax/1.5; ay/3; 6000; 1];
+x1 = [ax/1.7; ay/3; 6000; 1];
 %x1 = [C2; 1];
 
 %Project these points onto the camera image planes
@@ -169,7 +169,7 @@ ylabel('West Wall (y, mm)');
 zlabel('(z, mm)');
 axis equal;
 
-na = 0.01;
+na = 0.0;
 %now triangulate to find the 3d location again, using the camera matrices
 M = triangulateJYB(P1,[c1x+na*randn c1y+na*randn],P2,[c2x+na*randn c2y+na*randn]);
 plot3(M(1),M(2),M(3),'ro');
