@@ -73,6 +73,14 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         row_1 = (row_1-360)*0.00475
         row_2 = (row_2-360)*0.00475
 
+        print("west side centroid x: " + str(col_1) + " y: " + str(row_1) + " mm")
+        print("east side centroid x: " + str(col_2) + " y: " + str(row_2) + " mm")        
+
+        #col_1 = 0.8117
+        #row_1 = -0.9851
+        #col_2 = -1.0373
+        #row_2 = 0.42232
+
 
         #translated from matlab:
 
@@ -150,31 +158,34 @@ def triang_3D(col_1, row_1, col_2, row_2) :
 #---------------------------------------------------------
 def getthresholdedimg(im):
 
-	# this function take RGB image.Then convert it into HSV for easy colour detection 
-	# and threshold it with yellow and blue part as white and all other regions as black.Then return that image
-	
-	global imghsv
-	imghsv = cv.CreateImage(cv.GetSize(im),8,3)
-	
-	# Convert image from RGB to HSV
-	cv.CvtColor(im,imghsv,cv.CV_BGR2HSV)
-					
-	# creates images for blue 
-	imgblue   = cv.CreateImage(cv.GetSize(im),8,1)
-	
-	# creates blank image to which color images are added
-	imgthreshold = cv.CreateImage(cv.GetSize(im),8,1)
-	
-	# determine HSV color thresholds for yellow, blue, and green
-	# cv.InRange(src, lowerbound, upperbound, dst)
-	# for imgblue, lowerbound is 95, and upperbound is 115
-	cv.InRangeS(imghsv, cv.Scalar(55,110,110), cv.Scalar(155,255,255), imgblue  )
-	
-	# add color thresholds to blank 'threshold' image
-	cv.Add(imgthreshold, imgblue,   imgthreshold)
+	# this function take RGB image.Then converts it into HSV for easy colour detection 
+	# Threshold it with yellow and blue part as white and all other regions as black.Then return that image
+        RED_MIN = cv.Scalar(0,140,140)
+        RED_MAX = cv.Scalar(5,255,255)        
 
-	#return imgthreshold
-	return imgblue
+        global imghsv
+        imghsv = cv.CreateImage(cv.GetSize(im),8,3)
+        
+        # Convert image from RGB to HSV
+        cv.CvtColor(im,imghsv,cv.CV_BGR2HSV)
+        				
+        # creates images for blue 
+        imgblue   = cv.CreateImage(cv.GetSize(im),8,1)
+        
+        # creates blank image to which color images are added
+        imgthreshold = cv.CreateImage(cv.GetSize(im),8,1)
+        
+        # determine HSV color thresholds for yellow, blue, and green
+        # cv.InRange(src, lowerbound, upperbound, dst)
+        # for imgblue, lowerbound is 95, and upperbound is 115
+        # for red, 0 to 60
+        cv.InRangeS(imghsv, RED_MIN, RED_MAX, imgblue)
+        
+        # add color thresholds to blank 'threshold' image
+        cv.Add(imgthreshold, imgblue,   imgthreshold)
+
+        #return imgthreshold
+        return imgblue
 #---------------------------------------------------------
 #img is an image (passed in by reference)
 #sideName is for output printing purposes
@@ -189,11 +200,14 @@ def procImg(img,sideName,dispFlag):
         imgMask = cv.CreateImage(cv.GetSize(img), 8, 1)
 
         cv.SetZero(imdraw)
-        cv.Smooth(img, imgSmooth, cv.CV_GAUSSIAN, 3, 0) #Gaussian filter the image
-        imgbluethresh = getthresholdedimg(img) #Get a color thresholed binary image
-        imgMask = imgbluethresh
+        cv.Smooth(img, imgSmooth, cv.CV_GAUSSIAN, 5, 0) #Gaussian filter the image
+        imgbluethresh = getthresholdedimg(imgSmooth) #Get a color thresholed binary image
+        cv.Smooth(imgbluethresh, imgbluethresh, cv.CV_GAUSSIAN, 5, 0) #Gaussian filter the image
+        #imgMask = imgbluethresh
+        #imgbluethresh = imgMask
         cv.Erode(imgbluethresh, imgbluethresh, None,  3)
         cv.Dilate(imgbluethresh, imgbluethresh, None, 10)
+        imgMask = imgbluethresh
         #img2 = cv.CloneImage(imgbluethresh)
         storage = cv.CreateMemStorage(0)
         contour = cv.FindContours(imgbluethresh, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
@@ -213,11 +227,12 @@ def procImg(img,sideName,dispFlag):
                 area = bound_rect[2]*bound_rect[3];
 
                 #if dispFlag:
-                #        print("Area= " + str(area))
+                #print("Area= " + str(area))
                         
-                if (area > prevArea and area > 3000):
+                if (area > 5000) and (area > prevArea):
                         pt1 = (bound_rect[0], bound_rect[1])
-                        pt2 = (bound_rect[0] + bound_rect[2], bound_rect[1] + bound_rect[3])                        
+                        pt2 = (bound_rect[0] + bound_rect[2], bound_rect[1] + bound_rect[3])
+                prevArea = area
 
         # Draw bounding rectangle
         cv.Rectangle(img, pt1, pt2, cv.CV_RGB(255,0,0), 3)
@@ -228,9 +243,7 @@ def procImg(img,sideName,dispFlag):
 
         if (centroidx == 0 or centroidy == 0):
                 print ("no blimp detected from " + sideName)
-        else:
-                print(sideName + " centroid x:" + str(centroidx))
-                print(sideName + " centroid y:" + str(centroidy))
+                
                 
         print("")
 
@@ -282,15 +295,17 @@ if dispMore:
 #Live images from the IP cameras
 #(if not live, then this file needs to be in folder with a bunch of images)
 #(if live, then need to be local at WID)
-liveIP = 1
+liveIP = 0
 if liveIP == 0:
         #need to be in directory with a bunch of images
-        dirList = os.listdir(os.getcwd())
+        #dirList = os.listdir(os.getcwd())
+        dirName = 'E:\\Google Drive\\Medical_Physics\\Blimp\\2013-09-19\\15,10,7.32\\'        
+        dirList = os.listdir(dirName)
         num_base = 0
-        both_offset = 10
-        num_imgs = 145 - both_offset
+        both_offset = 0
+        num_imgs = 5 - both_offset
         east_offset = 0 + both_offset
-        west_offset = 147 + both_offset
+        west_offset = num_imgs + both_offset
         
 
 #address of the control server
@@ -310,12 +325,13 @@ while(1):
                 #capture images from cameras, store images to file
                 urllib.urlretrieve(url_west,fname_west)
                 urllib.urlretrieve(url_east,fname_east)
-        else:
-                num_base = (num_base + 1)%(num_imgs)
+        else:                
+                print("image # = " + str(num_base))
                 west_num = west_offset + num_base
                 east_num = east_offset + num_base
-                fname_west = dirList[west_num]
-                fname_east = dirList[east_num]
+                fname_west = dirName + dirList[west_num]
+                fname_east = dirName + dirList[east_num]
+                num_base = (num_base + 1)%(num_imgs)
                 cv.WaitKey(2000) #wait for 2 seconds so I can see the output
 
         #open the images from file
@@ -349,9 +365,9 @@ while(1):
                 #get the 3D location of the blimp
                 coord3D = triang_3D(centx_west, centy_west, centx_east, centy_east)
 
-                print("x_3d: " + str(coord3D[0]))
-                print("y_3d: " + str(coord3D[1]))
-                print("z_3d: " + str(coord3D[2]))
+                print("x_3d: " + str(coord3D[0]) + "mm")
+                print("y_3d: " + str(coord3D[1]) + "mm")
+                print("z_3d: " + str(coord3D[2]) + "mm")
                 print("err1: " + str(coord3D[3]))
                 print("err2: " + str(coord3D[4]))
         
