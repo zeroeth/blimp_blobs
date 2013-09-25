@@ -55,10 +55,12 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         
         #Corrected camera matrix for west side
         #P1 = np.array([[408.4918, -1607.7562, 3814.1879, 490234.8756], [-1793.2995, -707.4668, -45.8775, 646489.5760], [0.1810, -0.9505, -0.2524, 1285.5524]])
-        P1 = np.array([[-2.1, 0.0, -3.64, 55432.5], [0.0, 4.2, 0.0, -18186.0], [0.866, 0.0, -0.5, 7620.0]])
+        #P1 = np.array([[-2.1, 0.0, -3.64, 55432.5], [0.0, 4.2, 0.0, -18186.0], [0.866, 0.0, -0.5, 7620.0]])
+        P1 = np.array([[-1.297871, 0.000000, -3.994437, 60875.225495],[0.000000, 4.200000, 0.000000, -16086.000000],[0.951057, 0.000000, -0.309017, 4709.418994]])
         #Corrected camera matrix for east side
         #P2 = np.array([[-49.3179, -518.1547, -4126.6037, 847220.0489], [-1776.8193, 738.4249, -127.1965, 963513.3797], [0.2075, 0.9387, -0.2753, 1589.9759]])
-        P2 = np.array([[2.1, 0.0, -3.64, -34048.4],[0.0, -4.2, 0.0, 18186.0],[-0.866, 0.0, -0.5, 44521.3]])
+        #P2 = np.array([[2.1, 0.0, -3.64, -34048.4],[0.0, -4.2, 0.0, 18186.0],[-0.866, 0.0, -0.5, 44521.3]])
+        P2 = np.array([[2.100000, 1.651303, -3.240864, -46414.721975],[0.000000, -3.742227, -1.906760, 43391.754855],[-0.866025, 0.226995, -0.445503, 42821.420363]])
         #blimp position from camera 1
         #col_1 = 396
         #row_1 = 424
@@ -67,14 +69,12 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         #col_2 = 518
         #row_2 = 538
 
-        #Convert pixel numbers to mm, 0, 0 is the center of the image, 
-        col_1 = (col_1-640)*0.0035
-        col_2 = (col_2-640)*0.0035
-        row_1 = (row_1-360)*0.00475
-        row_2 = (row_2-360)*0.00475
-
-        print("west side centroid x: " + str(col_1) + " y: " + str(row_1) + " mm")
-        print("east side centroid x: " + str(col_2) + " y: " + str(row_2) + " mm")        
+        #Convert pixel numbers to mm, 0, 0 is the center of the image,
+        # negative value fixes image origin position differences between matlab and opencv
+        #col_1 = (col_1-640)*-0.0035
+        #col_2 = (col_2-640)*-0.0035
+        #row_1 = (row_1-360)*-0.00475
+        #row_2 = (row_2-360)*-0.00475 -> Doing this below       
 
         #col_1 = 0.8117
         #row_1 = -0.9851
@@ -228,7 +228,8 @@ def procImg(img,sideName,dispFlag):
 
                 #if dispFlag:
                 #print("Area= " + str(area))
-                        
+
+                #Largest area over 5000 pixels
                 if (area > 5000) and (area > prevArea):
                         pt1 = (bound_rect[0], bound_rect[1])
                         pt2 = (bound_rect[0] + bound_rect[2], bound_rect[1] + bound_rect[3])
@@ -238,11 +239,17 @@ def procImg(img,sideName,dispFlag):
         cv.Rectangle(img, pt1, pt2, cv.CV_RGB(255,0,0), 3)
 
         # calculating centroid
-        centroidx = cv.Round((pt1[0]+pt2[0])/2)
-        centroidy = cv.Round((pt1[1]+pt2[1])/2)
-
+        centroidx = cv.Round((pt1[0]+pt2[0])/2) #in pixels
+        centroidy = cv.Round((pt1[1]+pt2[1])/2) 
+        col = (centroidx-640)*-0.0035 #in mm, using sensor size of 4.54 mm X 3.42 mm
+        row = (centroidy-360)*-0.00475
+        
         if (centroidx == 0 or centroidy == 0):
                 print ("no blimp detected from " + sideName)
+                blimpDet = 0
+        else:
+                print(sideName+" side centroid x: " + str(col) + " y: " + str(row) + " mm")
+                blimpDet = 1
                 
                 
         print("")
@@ -266,7 +273,7 @@ def procImg(img,sideName,dispFlag):
                 cv.ShowImage(sideName + "_hsv", small_hsv)
                 cv.WaitKey(100)
 
-        return (centroidx, centroidy)
+        return (col, row, blimpDet)
 
 
         
@@ -299,13 +306,40 @@ liveIP = 0
 if liveIP == 0:
         #need to be in directory with a bunch of images
         #dirList = os.listdir(os.getcwd())
-        dirName = 'E:\\Google Drive\\Medical_Physics\\Blimp\\2013-09-19\\15,10,7.32\\'        
+        #Directory containing directories of calibrated images
+        dirName = 'E:\\Google Drive\\Medical_Physics\\Blimp\\2013-09-19\\'
         dirList = os.listdir(dirName)
-        num_base = 0
-        both_offset = 0
-        num_imgs = 5 - both_offset
-        east_offset = 0 + both_offset
-        west_offset = num_imgs + both_offset
+
+        #Create a list of files and list of real positions corresponding to each file
+        westList = []
+        eastList = []
+        xpList = []
+        ypList = []
+        zpList = []
+        wL = [] #just filename (no path)
+        eL = [] #just filename (no path)
+        for file in dirList:
+            p = file.split(',',3);
+            xp = float(p[0])*1000
+            yp = float(p[1])*1000
+            zp = float(p[2])*1000
+            fpath = dirName + file
+            subDirList = os.listdir(fpath)
+            len2 = len(subDirList)/2
+            numWest = len2
+            numEast = len2
+            for index in range(len2):
+                #add file name to list
+                #print dirName+file+"\\"+subDirList[index]
+                eastList.append(dirName+file+"\\"+subDirList[index])
+                westList.append(dirName+file+"\\"+subDirList[index+len2])
+                eL.append(subDirList[index][11:13])
+                wL.append(subDirList[index+len2][11:13])
+                xpList.append(xp)
+                ypList.append(yp)
+                zpList.append(zp)
+        imgIdx = 0
+        totImg = len(xpList)
         
 
 #address of the control server
@@ -318,21 +352,20 @@ size = 1024
 
 dispScale1 = 0.35
 dispScale2 = 0.25
-
+firstTime = 1
 
 while(1):
+        blimpDet = 1 #flag saying blimp has been fully detected
         if liveIP:
                 #capture images from cameras, store images to file
                 urllib.urlretrieve(url_west,fname_west)
                 urllib.urlretrieve(url_east,fname_east)
         else:                
-                print("image # = " + str(num_base))
-                west_num = west_offset + num_base
-                east_num = east_offset + num_base
-                fname_west = dirName + dirList[west_num]
-                fname_east = dirName + dirList[east_num]
-                num_base = (num_base + 1)%(num_imgs)
-                cv.WaitKey(2000) #wait for 2 seconds so I can see the output
+                print("image # = " + str(imgIdx))
+                fname_west = westList[imgIdx]
+                fname_east = eastList[imgIdx]
+                #imgIdx = (imgIdx + 1)%(totImg) -> Update below
+                #cv.WaitKey(2000) #wait for 2 seconds so I can see the output
 
         #open the images from file
         frame_west = cv.LoadImage(fname_west,cv.CV_LOAD_IMAGE_COLOR);
@@ -342,11 +375,13 @@ while(1):
         centroids = procImg(frame_west,"west",dispMore)  
         centx_west = centroids[0]
         centy_west = centroids[1]
+        blimpDet = centroids[2] and blimpDet
 
         #find the blimp with one camera, frame is passed in by reference
         centroids = procImg(frame_east,"east",dispMore)        
         centx_east = centroids[0]
         centy_east = centroids[1]
+        blimpDet = centroids[2] and blimpDet
 
         #decimate the resulting images
         small_west = cv.CreateImage((int(dispScale1*cv.GetSize(frame_west)[0]), int(dispScale1*cv.GetSize(frame_west)[1])), 8, 3)
@@ -360,8 +395,9 @@ while(1):
         cv.WaitKey(100)
         cv.ShowImage("east", small_east)
         cv.WaitKey(100)
-
-        if (centx_west != 0 and centy_west != 0 and centx_east != 0 and centy_east != 0):
+        
+        coord3D = [0,0,0]
+        if (blimpDet):
                 #get the 3D location of the blimp
                 coord3D = triang_3D(centx_west, centy_west, centx_east, centy_east)
 
@@ -383,6 +419,34 @@ while(1):
 ##                        #we got disconnected somehow, reconnect
 ##                        s = connect(ip,port)
         print("-----------------------------------")
-            
+
+        if liveIP:
+                #nothing yet
+                firstTime = 0
+
+        else:
+                #write out positions into a csv file
+                if firstTime == 1:
+                        #overwrite
+                        fo = open(dirName+"..\\tracking_optimization.txt", "w")
+                        fo.write("Wx(mm)\tWy(mm)\tEx(mm)\tEy(mm)\t")
+                        fo.write("Tru3Dx(mm)\tTru3Dy(mm)\tTru3Dz(mm)\t")
+                        fo.write("Est3Dx(mm)\tEst3Dy(mm)\tEst3Dz(mm)\t")
+                        fo.write("Err3Dx(mm)\tErr3Dy(mm)\tErr3Dz(mm)\n")
+                        firstTime = 0
+                else:
+                        #append
+                        fo = open(dirName+"..\\tracking_optimization.txt", "a")
+                if blimpDet == 1:
+                        fo.write(str(centx_west)+"\t"+str(centy_west)+"\t"+str(centx_east)+"\t"+str(centy_east)+"\t")
+                        fo.write(str(xpList[imgIdx])+"\t"+str(ypList[imgIdx])+"\t"+str(zpList[imgIdx])+"\t")
+                        fo.write(str(coord3D[0])+"\t"+str(coord3D[1])+"\t"+str(coord3D[2])+"\t")
+                        errX = abs(coord3D[0] - xpList[imgIdx])
+                        errY = abs(coord3D[1] - ypList[imgIdx])
+                        errZ = abs(coord3D[2] - zpList[imgIdx])
+                        fo.write(str(errX)+"\t"+str(errY)+"\t"+str(errZ)+"\t")
+                        fo.write(wL[imgIdx]+"\t"+eL[imgIdx]+"\n")
+                fo.close()
+                imgIdx = (imgIdx + 1)%(totImg)
 
 ######################################################
