@@ -39,20 +39,20 @@ iy = 720;
 %--Translation--
 %Camera 1 (west side)
 Cx1 = 0;
-Cy1 = ay/2; %centered in y dim
+Cy1 = ay/2-500; %centered in y dim
 Cz1 = az;
 C1 = [Cx1; Cy1; Cz1];
 
 %Camera 2 (east side)
 Cx2 = ax;
-Cy2 = ay/2;
+Cy2 = ay/2-500;
 Cz2 = az;
 C2 = [Cx2; Cy2; Cz2];
 
 %--Rotation--
 %Camera 1
 thx1 = 0;
-thy1 = pi/1.5; %point 45 deg down
+thy1 = 0.6*pi; %point 45 deg down
 thz1 = 0;
 Rcx1 = [1 0 0; 0 cos(thx1) -sin(thx1); 0 sin(thx1) cos(thx1)];
 Rcy1 = [cos(thy1) 0 sin(thy1); 0 1 0; -sin(thy1) 0 cos(thy1)];
@@ -60,8 +60,8 @@ Rcz1 = [cos(thz1) -sin(thz1) 0; sin(thz1) cos(thz1) 0; 0 0 1];
 Rc1 = Rcx1*Rcy1*Rcz1;
 
 %Camera 2
-thx2 = 0;
-thy2 = -pi/1.5; %point 45 deg down
+thx2 = 0.15*pi;
+thy2 = -0.6667*pi; %point 45 deg down
 thz2 = pi;
 Rcx2 = [1 0 0; 0 cos(thx2) -sin(thx2); 0 sin(thx2) cos(thx2)];
 Rcy2 = [cos(thy2) 0 sin(thy2); 0 1 0; -sin(thy2) 0 cos(thy2)];
@@ -173,3 +173,12 @@ na = 0.0;
 %now triangulate to find the 3d location again, using the camera matrices
 M = triangulateJYB(P1,[c1x+na*randn c1y+na*randn],P2,[c2x+na*randn c2y+na*randn]);
 plot3(M(1),M(2),M(3),'ro');
+
+fprintf('P1 = np.array([[%f,%f,%f,%f],[%f,%f,%f,%f],{%f,%f,%f,%f]])\n', ...
+        P1(1,1),P1(1,2),P1(1,3),P1(1,4),...
+        P1(2,1),P1(2,2),P1(2,3),P1(2,4),...
+        P1(3,1),P1(3,2),P1(3,3),P1(3,4));
+fprintf('P2 = np.array([[%f,%f,%f,%f],[%f,%f,%f,%f],{%f,%f,%f,%f]])\n', ...
+        P2(1,1),P2(1,2),P2(1,3),P2(1,4),...
+        P2(2,1),P2(2,2),P2(2,3),P2(2,4),...
+        P2(3,1),P2(3,2),P2(3,3),P2(3,4));    
