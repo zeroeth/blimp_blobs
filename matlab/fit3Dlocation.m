@@ -104,7 +104,6 @@ K = [fx 0 0; 0 fy 0; 0 0 1];
 P1 = K*E1;
 P2 = K*E2;
 
-
 %now triangulate to find the 3d location again, using the camera matrices
 [nums,numc] = size(c1xy);
 
@@ -115,41 +114,14 @@ for i = 1:nums
 end
 
 
-% disp(sprintf('real x= %4.2f,y = %4.2f, z = %4.2f \n',rxyz(end,1),rxyz(end,2),rxyz(end,3)));
-% disp(sprintf('Estd x= %4.2f,y = %4.2f, z = %4.2f \n',exyz(end,1),exyz(end,2),exyz(end,3)));
-% clr1= 'rgbmcky';
-% mark1 ='spbthos';
-% clr2= 'ykcmbgr';
-% mark2 ='xhtbps';
 
-% figure(1);clf
-% for i = 1:nums
-%     plot3(exyz(i,1),exyz(i,2),exyz(i,3),clr1(mod(i,7)+1),mark1(mod(i,7)+1)); hold on;
-%     plot3(rxyz(i,1),rxyz(i,2),rxyz(i,3),clr2(mod(i,7)+1),mark1(mod(i,7)+1));hold on
-% end
-% clr1 = 'rgbmckyk';
-% clr2 = 'ykcmbgrk';
-% mark1 = 'sdvphx*o';
-% figure(1);clf; axis([0 45000 10000 20000]);
-% for i = 1%:nums
-%     plot3(exyz(i,1),exyz(i,2),exyz(i,3),[clr1(i),mark1(i)]); hold on;
-%     plot3(rxyz(i,1),rxyz(i,2),rxyz(i,3),[clr2(i),mark1(i)]);hold on
-%     xlim([0 45000]);
-%     ylim([0 10000]);
-%     zlim([0 20000]);
-%     %axis([0 45000 10000 20000]);
-%     pause(0.5)
-%     drawnow
-%
-% end
 
-pf = 1;
+err = mean(sqrt(sum((exyz-rxyz).^2,2)));
+
+
 if ccp(4) > 60000
-    pf = pf*10^3;
+    err = err*10^3;
 end
-
-err = pf*mean(sqrt(sum((exyz-rxyz).^2,2)));
-
 
 
 disp(sprintf('fitting error is %d',err));
