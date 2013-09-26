@@ -62,8 +62,8 @@ def triang_3D(col_1, row_1, col_2, row_2) :
         #P2 = np.array([[-49.3179, -518.1547, -4126.6037, 847220.0489], [-1776.8193, 738.4249, -127.1965, 963513.3797], [0.2075, 0.9387, -0.2753, 1589.9759]])
         #P2 = np.array([[2.1, 0.0, -3.64, -34048.4],[0.0, -4.2, 0.0, 18186.0],[-0.866, 0.0, -0.5, 44521.3]])
         #P2 = np.array([[2.100000, 1.651303, -3.240864, -46414.721975],[0.000000, -3.742227, -1.906760, 43391.754855],[-0.866025, 0.226995, -0.445503, 42821.420363]])
-        P1 = np.array([[-1.173428,-0.688810,-3.973488,47750.246983],[-0.169082,4.143045,-0.668271,-12800.579085],{0.959334,-0.006367,-0.282201,3183.078361]])
-        P2 = np.array([[2.655326,1.495096,-2.890317,-51294.190875],[0.815836,-3.917179,-1.276762,34865.251439],{-0.750044,0.058514,-0.658795,33903.280179]])
+        P1 = np.array([[-1.173428,-0.688810,-3.973488,47750.246983],[-0.169082,4.143045,-0.668271,-12800.579085],[0.959334,-0.006367,-0.282201,3183.078361]])
+        P2 = np.array([[2.655326,1.495096,-2.890317,-51294.190875],[0.815836,-3.917179,-1.276762,34865.251439],[-0.750044,0.058514,-0.658795,33903.280179]])
 
         #blimp position from camera 1
         #col_1 = 396
@@ -164,8 +164,13 @@ def getthresholdedimg(im):
 
 	# this function take RGB image.Then converts it into HSV for easy colour detection 
 	# Threshold it with yellow and blue part as white and all other regions as black.Then return that image
-        RED_MIN = cv.Scalar(0,140,140)
-        RED_MAX = cv.Scalar(5,255,255)        
+        RED_MIN1 = cv.Scalar(0,100,150)
+        RED_MAX1 = cv.Scalar(2,255,255)
+        RED_MIN2 = cv.Scalar(170,100,150)
+        RED_MAX2 = cv.Scalar(180,255,255)
+        YEL_MIN = cv.Scalar(22,90,90)
+        YEL_MAX = cv.Scalar(25,255,255)
+        
 
         global imghsv
         imghsv = cv.CreateImage(cv.GetSize(im),8,3)
@@ -173,23 +178,30 @@ def getthresholdedimg(im):
         # Convert image from RGB to HSV
         cv.CvtColor(im,imghsv,cv.CV_BGR2HSV)
         				
-        # creates images for blue 
-        imgblue   = cv.CreateImage(cv.GetSize(im),8,1)
+        # creates images for red
+        imgred1   = cv.CreateImage(cv.GetSize(im),8,1)
+        imgred2   = cv.CreateImage(cv.GetSize(im),8,1)
+
+        # image for yellow
+        imgyellow   = cv.CreateImage(cv.GetSize(im),8,1)        
         
         # creates blank image to which color images are added
         imgthreshold = cv.CreateImage(cv.GetSize(im),8,1)
         
         # determine HSV color thresholds for yellow, blue, and green
         # cv.InRange(src, lowerbound, upperbound, dst)
-        # for imgblue, lowerbound is 95, and upperbound is 115
-        # for red, 0 to 60
-        cv.InRangeS(imghsv, RED_MIN, RED_MAX, imgblue)
+        cv.InRangeS(imghsv, RED_MIN1, RED_MAX1, imgred1)
+        cv.InRangeS(imghsv, RED_MIN2, RED_MAX2, imgred2)
+        cv.InRangeS(imghsv, YEL_MIN, YEL_MAX, imgyellow)
+        
         
         # add color thresholds to blank 'threshold' image
-        cv.Add(imgthreshold, imgblue,   imgthreshold)
+        cv.Add(imgthreshold, imgred1,   imgthreshold)
+        cv.Add(imgthreshold, imgred2,   imgthreshold)
+        cv.Add(imgthreshold, imgyellow, imgthreshold)
 
         #return imgthreshold
-        return imgblue
+        return imgthreshold
 #---------------------------------------------------------
 #img is an image (passed in by reference)
 #sideName is for output printing purposes
@@ -201,20 +213,20 @@ def procImg(img,sideName,dispFlag):
         #put the smoothed image here
         imgSmooth = cv.CreateImage(cv.GetSize(img), 8, 3)
         #put thresholded image here
-        imgMask = cv.CreateImage(cv.GetSize(img), 8, 1)
+        imgMask = cv.CreateImage(cv.GetSize(img), 1, 1)
 
         cv.SetZero(imdraw)
-        cv.Smooth(img, imgSmooth, cv.CV_GAUSSIAN, 5, 0) #Gaussian filter the image
-        imgbluethresh = getthresholdedimg(imgSmooth) #Get a color thresholed binary image
-        cv.Smooth(imgbluethresh, imgbluethresh, cv.CV_GAUSSIAN, 5, 0) #Gaussian filter the image
-        #imgMask = imgbluethresh
+        #cv.Smooth(img, imgSmooth, cv.CV_GAUSSIAN, 13, 0) #Gaussian filter the image
+        imgthresh = getthresholdedimg(img) #Get a color thresholed binary image
+        #cv.Smooth(imgbluethresh, imgbluethresh, cv.CV_GAUSSIAN, 5, 0) #Gaussian filter the image
+        imgMask = imgthresh
         #imgbluethresh = imgMask
-        cv.Erode(imgbluethresh, imgbluethresh, None,  3)
-        cv.Dilate(imgbluethresh, imgbluethresh, None, 10)
-        imgMask = imgbluethresh
+        cv.Erode(imgMask, imgMask, None,  6)        
+        cv.Dilate(imgMask, imgMask, None, 10)
+        
         #img2 = cv.CloneImage(imgbluethresh)
         storage = cv.CreateMemStorage(0)
-        contour = cv.FindContours(imgbluethresh, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
+        contour = cv.FindContours(imgMask, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
 
         centroidx = 0
         centroidy = 0
@@ -231,13 +243,13 @@ def procImg(img,sideName,dispFlag):
                 area = bound_rect[2]*bound_rect[3];
 
                 #if dispFlag:
-                #print("Area= " + str(area))
+                print("Area= " + str(area))
 
                 #Largest area over 5000 pixels
-                if (area > 5000) and (area > prevArea):
+                if (area > 2000) and (area > prevArea):
                         pt1 = (bound_rect[0], bound_rect[1])
                         pt2 = (bound_rect[0] + bound_rect[2], bound_rect[1] + bound_rect[3])
-                prevArea = area
+                        prevArea = area
 
         # Draw bounding rectangle
         cv.Rectangle(img, pt1, pt2, cv.CV_RGB(255,0,0), 3)
@@ -259,7 +271,7 @@ def procImg(img,sideName,dispFlag):
         print("")
 
         if dispFlag:
-                small_thresh = cv.CreateImage((int(dispScale1*cv.GetSize(imgbluethresh)[0]), int(dispScale1*cv.GetSize(imgbluethresh)[1])), 8, 1)
+                small_thresh = cv.CreateImage((int(dispScale1*cv.GetSize(imgMask)[0]), int(dispScale1*cv.GetSize(imgMask)[1])), 8, 1)
                 cv.Resize(imgMask, small_thresh)
                 cv.Threshold(small_thresh, small_thresh, 0, 255, cv.CV_THRESH_BINARY)
                 cv.ShowImage(sideName + "_threshold", small_thresh)
@@ -369,7 +381,7 @@ while(1):
                 fname_west = westList[imgIdx]
                 fname_east = eastList[imgIdx]
                 #imgIdx = (imgIdx + 1)%(totImg) -> Update below
-                #cv.WaitKey(2000) #wait for 2 seconds so I can see the output
+                cv.WaitKey(3000) #wait for 2 seconds so I can see the output
 
         #open the images from file
         frame_west = cv.LoadImage(fname_west,cv.CV_LOAD_IMAGE_COLOR);
